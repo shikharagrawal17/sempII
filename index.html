@@ -1,60 +1,525 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="./script.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sempII | Decentralized Transparent NGO Donations</title>
+  <meta name="description" content="A transparent, verifiable Web3 donation platform connecting donors directly to verified NGOs on the blockchain.">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            accent: {
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              emerald: '#10b981',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Ethers.js CDN (v5.7.2) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  
+  <link rel="stylesheet" href="./style.css">
 </head>
-<body>
-    <nav class="bg-gray-800">
-  <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-    <div class="relative flex items-center justify-between h-16">
-      <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
-        <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
-          <span class="sr-only">Open main menu</span>
-          <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
-        <div class="flex-shrink-0">
-          <a href="#" class="text-white font-bold text-xl">My App</a>
+<body class="min-h-screen flex flex-col relative selection:bg-indigo-500 selection:text-white">
+
+  <!-- Ambient Glow Background -->
+  <div class="fixed inset-0 pointer-events-none hero-glow z-0"></div>
+
+  <!-- Navbar -->
+  <header class="sticky top-0 z-40 glass-nav transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('explore')">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 via-blue-500 to-emerald-400 p-[2px] shadow-lg shadow-indigo-500/20">
+            <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+              <i data-lucide="shield-check" class="w-6 h-6 text-emerald-400"></i>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-2xl font-black tracking-tight text-white">semp<span class="text-indigo-400">II</span></span>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Web3</span>
+            </div>
+            <p class="text-[11px] text-gray-400 font-medium">Decentralized NGO Philanthropy</p>
+          </div>
         </div>
-        <div class="hidden sm:block sm:ml-6">
-          <div class="flex space-x-4">
-            <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Home</a>
-            <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">My Donations</a>
-            <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Enroll as NGO</a>
+
+        <!-- Navigation Links (Desktop) -->
+        <nav class="hidden md:flex items-center space-x-1 p-1.5 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-md">
+          <button onclick="switchTab('explore')" id="tab-btn-explore" class="tab-btn active px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center space-x-2 text-gray-300 hover:text-white">
+            <i data-lucide="compass" class="w-4 h-4"></i>
+            <span>Explore NGOs</span>
+          </button>
+          <button onclick="switchTab('donations')" id="tab-btn-donations" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center space-x-2 text-gray-300 hover:text-white">
+            <i data-lucide="heart-handshake" class="w-4 h-4"></i>
+            <span>My Donations</span>
+          </button>
+          <button onclick="switchTab('enroll')" id="tab-btn-enroll" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center space-x-2 text-gray-300 hover:text-white">
+            <i data-lucide="building-2" class="w-4 h-4"></i>
+            <span>Enroll as NGO</span>
+          </button>
+          <button onclick="switchTab('admin')" id="tab-btn-admin" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center space-x-2 text-gray-300 hover:text-white">
+            <i data-lucide="key" class="w-4 h-4"></i>
+            <span>Admin Portal</span>
+          </button>
+        </nav>
+
+        <!-- Right Action & Wallet -->
+        <div class="flex items-center space-x-3">
+          
+          <!-- Mode Toggle (Demo vs Web3 Live) -->
+          <div class="hidden sm:flex items-center bg-slate-900/80 border border-slate-800 rounded-lg p-1 text-xs">
+            <button id="mode-interactive-btn" onclick="setAppMode('interactive')" class="px-2.5 py-1 rounded-md transition font-medium text-white bg-indigo-600/60 shadow">Demo Mode</button>
+            <button id="mode-web3-btn" onclick="setAppMode('web3')" class="px-2.5 py-1 rounded-md transition font-medium text-gray-400 hover:text-white">Web3 Live</button>
+          </div>
+
+          <!-- Connect Wallet Button -->
+          <div id="wallet-container" class="relative">
+            <button id="connect-wallet-btn" class="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-500 hover:to-blue-500 transition shadow-lg shadow-indigo-500/25 border border-indigo-400/30">
+              <i data-lucide="wallet" class="w-4 h-4"></i>
+              <span id="wallet-btn-text">Connect Wallet</span>
+            </button>
+          </div>
+
+          <!-- Mobile menu button -->
+          <button id="mobile-menu-toggle" class="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-slate-800">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown -->
+    <div id="mobile-menu" class="hidden md:hidden border-t border-slate-800 bg-slate-950/95 px-4 pt-3 pb-5 space-y-2">
+      <button onclick="switchTab('explore')" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-800 flex items-center space-x-2">
+        <i data-lucide="compass" class="w-4 h-4"></i>
+        <span>Explore NGOs</span>
+      </button>
+      <button onclick="switchTab('donations')" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-800 flex items-center space-x-2">
+        <i data-lucide="heart-handshake" class="w-4 h-4"></i>
+        <span>My Donations</span>
+      </button>
+      <button onclick="switchTab('enroll')" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-800 flex items-center space-x-2">
+        <i data-lucide="building-2" class="w-4 h-4"></i>
+        <span>Enroll as NGO</span>
+      </button>
+      <button onclick="switchTab('admin')" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-800 flex items-center space-x-2">
+        <i data-lucide="key" class="w-4 h-4"></i>
+        <span>Admin Portal</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 z-10">
+
+    <!-- Top Banner: Mode Indicator -->
+    <div id="mode-notice" class="mb-6 p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/20 flex flex-wrap items-center justify-between text-xs text-indigo-300 gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="flex h-2 w-2 relative">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        <span id="mode-status-text"><strong>Running in Demo Simulation Mode:</strong> Instant testing with rich sample verified NGOs and zero gas fees.</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button onclick="resetDemoData()" class="underline hover:text-white transition">Reset Demo Data</button>
+      </div>
+    </div>
+
+    <!-- STATS OVERVIEW CARDS -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Donated</span>
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+            <i data-lucide="coins" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <div class="mt-3 flex items-baseline space-x-2">
+          <span id="stat-total-eth" class="text-2xl font-bold font-mono-custom text-white">42.85</span>
+          <span class="text-sm font-bold text-indigo-400">ETH</span>
+        </div>
+        <p class="text-[11px] text-gray-400 mt-1">≈ $<span id="stat-total-usd">141,405</span> USD verified on-chain</p>
+      </div>
+
+      <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Verified NGOs</span>
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+            <i data-lucide="badge-check" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <div class="mt-3 flex items-baseline space-x-2">
+          <span id="stat-total-ngos" class="text-2xl font-bold font-mono-custom text-white">8</span>
+          <span class="text-sm text-gray-400">Organizations</span>
+        </div>
+        <p class="text-[11px] text-emerald-400 mt-1">100% Government Reg. Verified</p>
+      </div>
+
+      <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Donors</span>
+          <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+            <i data-lucide="users" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <div class="mt-3 flex items-baseline space-x-2">
+          <span id="stat-total-donors" class="text-2xl font-bold font-mono-custom text-white">1,240</span>
+          <span class="text-sm text-gray-400">Wallets</span>
+        </div>
+        <p class="text-[11px] text-gray-400 mt-1">Direct peer-to-contract transfers</p>
+      </div>
+
+      <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Platform Fee</span>
+          <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
+            <i data-lucide="percent" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <div class="mt-3 flex items-baseline space-x-2">
+          <span class="text-2xl font-bold font-mono-custom text-emerald-400">0.0%</span>
+          <span class="text-xs text-gray-400 font-medium">(Zero Intermediaries)</span>
+        </div>
+        <p class="text-[11px] text-gray-400 mt-1">100% funds reach NGO wallet</p>
+      </div>
+    </section>
+
+    <!-- TAB 1: EXPLORE NGOS -->
+    <section id="section-explore" class="tab-content">
+      
+      <!-- Hero / Search Filter Header -->
+      <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-8 border border-slate-800 relative overflow-hidden">
+        <div class="relative z-10 max-w-3xl">
+          <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-3">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>Zero Intermediaries. Complete Transparency.</span>
+          </span>
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+            Support Verified Causes with <span class="text-gradient">Instant Web3 Donations</span>
+          </h1>
+          <p class="text-gray-400 mt-2 text-sm sm:text-base leading-relaxed">
+            Every listed organization is strictly pre-authorized and verified on-chain. Donate Ethereum directly to authorized wallets with immutable public receipts.
+          </p>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="mt-6 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center gap-3">
+          <div class="relative flex-1 w-full">
+            <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="ngo-search-input" placeholder="Search NGO by name, cause or registration number..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500 transition placeholder-gray-500">
+          </div>
+          
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <select id="ngo-category-filter" class="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-gray-300 focus:outline-none focus:border-indigo-500 transition">
+              <option value="all">All Categories</option>
+              <option value="Education">Education & Children</option>
+              <option value="Healthcare">Healthcare & Relief</option>
+              <option value="Environment">Environment & Climate</option>
+              <option value="Hunger">Hunger & Poverty</option>
+              <option value="Animals">Animal Welfare</option>
+            </select>
           </div>
         </div>
       </div>
-      <div class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-        <button id="connect-metamask-button" class="bg-white p-1 rounded-md text-gray-800 font-medium hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
-          Connect to Metamask
-        </button>
+
+      <!-- NGO Cards Grid -->
+      <div id="ngo-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Rendered via JS -->
       </div>
+      
+      <!-- Empty State -->
+      <div id="ngo-empty-state" class="hidden text-center py-16">
+        <div class="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-gray-500 mb-3">
+          <i data-lucide="folder-search" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white">No NGOs Found</h3>
+        <p class="text-sm text-gray-400 mt-1">Try modifying your search or filter keywords.</p>
+      </div>
+    </section>
+
+    <!-- TAB 2: MY DONATIONS -->
+    <section id="section-donations" class="tab-content hidden">
+      <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
+              <i data-lucide="history" class="w-6 h-6 text-indigo-400"></i>
+              <span>My Donation History</span>
+            </h2>
+            <p class="text-sm text-gray-400 mt-1">Verifiable on-chain records of all donations made from your connected wallet.</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="text-xs px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-gray-300">
+              Total Contributed: <strong id="my-total-donated-eth" class="text-emerald-400 font-mono-custom">0.00 ETH</strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- Donations Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="text-xs uppercase bg-slate-900/80 text-gray-400 border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-3.5 rounded-l-xl">Recipient NGO</th>
+                <th class="px-4 py-3.5">Registration ID</th>
+                <th class="px-4 py-3.5">Amount (ETH)</th>
+                <th class="px-4 py-3.5">NGO Wallet</th>
+                <th class="px-4 py-3.5">Date & Time</th>
+                <th class="px-4 py-3.5 rounded-r-xl">Receipt / Hash</th>
+              </tr>
+            </thead>
+            <tbody id="donations-table-body" class="divide-y divide-slate-800/60 text-gray-300">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State for Donations -->
+        <div id="donations-empty-state" class="hidden text-center py-16">
+          <div class="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-gray-500 mb-3">
+            <i data-lucide="heart" class="w-8 h-8 text-pink-500/40"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">No Donations Yet</h3>
+          <p class="text-sm text-gray-400 mt-1">Explore verified NGOs and make your first blockchain-backed donation.</p>
+          <button onclick="switchTab('explore')" class="mt-4 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500 transition">
+            Explore NGOs
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ENROLL AS NGO -->
+    <section id="section-enroll" class="tab-content hidden">
+      <div class="max-w-3xl mx-auto">
+        <div class="glass-panel rounded-3xl p-6 sm:p-10 border border-slate-800">
+          <div class="flex items-center space-x-3 mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+              <i data-lucide="building" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-white">Enroll as an Authorized NGO</h2>
+              <p class="text-sm text-gray-400">Complete on-chain onboarding for pre-authorized non-profit organizations.</p>
+            </div>
+          </div>
+
+          <div class="bg-indigo-950/30 border border-indigo-500/20 rounded-2xl p-4 mb-6 text-xs text-indigo-300 flex items-start space-x-3">
+            <i data-lucide="info" class="w-5 h-5 flex-shrink-0 text-indigo-400 mt-0.5"></i>
+            <div>
+              <strong class="font-semibold text-white">Pre-Authorization Requirement:</strong>
+              Your official government Registration Number and your receiving Wallet Address must first be whitelisted by the Platform Owner via the Admin Portal before enrollment can succeed.
+            </div>
+          </div>
+
+          <form id="enroll-ngo-form" class="space-y-5">
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">NGO Official Name</label>
+              <input type="text" id="enroll-name" required placeholder="e.g., Clean Oceans Global Foundation" class="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Registration Number (ID)</label>
+                <input type="number" id="enroll-reg-id" required placeholder="e.g., 1004" class="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono-custom">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Cause Category</label>
+                <select id="enroll-category" class="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-gray-300 focus:outline-none focus:border-indigo-500 transition">
+                  <option value="Education">Education & Children</option>
+                  <option value="Healthcare">Healthcare & Relief</option>
+                  <option value="Environment">Environment & Climate</option>
+                  <option value="Hunger">Hunger & Poverty</option>
+                  <option value="Animals">Animal Welfare</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Receiving Ethereum Wallet Address</label>
+              <input type="text" id="enroll-wallet" required placeholder="0x..." class="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono-custom">
+              <p class="text-[11px] text-gray-500 mt-1">Must match the wallet address you send this enrollment transaction from.</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Mission Description</label>
+              <textarea id="enroll-description" rows="3" required placeholder="Describe your foundation's mission, initiatives, and impact..." class="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500 transition"></textarea>
+            </div>
+
+            <button type="submit" id="enroll-submit-btn" class="w-full py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition shadow-lg shadow-emerald-600/20 flex items-center justify-center space-x-2">
+              <i data-lucide="check-circle" class="w-4 h-4"></i>
+              <span>Submit & Enroll NGO</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ADMIN PORTAL -->
+    <section id="section-admin" class="tab-content hidden">
+      <div class="max-w-4xl mx-auto space-y-6">
+        
+        <!-- Whitelist Card -->
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800">
+          <div class="flex items-center space-x-3 mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
+              <i data-lucide="shield-alert" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-white">Admin Whitelist & Authorization</h2>
+              <p class="text-sm text-gray-400">Pre-authorize verified NGO registration numbers and their authorized recipient wallets.</p>
+            </div>
+          </div>
+
+          <form id="admin-auth-form" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Govt Registration Number</label>
+                <input type="number" id="auth-reg-number" required placeholder="e.g., 2001" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white focus:outline-none focus:border-purple-500 transition font-mono-custom">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Authorized Wallet Address</label>
+                <input type="text" id="auth-wallet" required placeholder="0x..." class="w-full px-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white focus:outline-none focus:border-purple-500 transition font-mono-custom">
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white transition shadow-lg shadow-purple-600/20 flex items-center justify-center space-x-2">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>Authorize NGO Registration</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Authorized List Overview -->
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800">
+          <h3 class="text-lg font-bold text-white mb-4 flex items-center space-x-2">
+            <i data-lucide="list-checks" class="w-5 h-5 text-emerald-400"></i>
+            <span>Authorized Whitelist Database</span>
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="text-xs uppercase bg-slate-900/80 text-gray-400 border-b border-slate-800">
+                <tr>
+                  <th class="px-4 py-3 rounded-l-lg">Reg ID</th>
+                  <th class="px-4 py-3">Authorized Wallet</th>
+                  <th class="px-4 py-3">Enrollment Status</th>
+                  <th class="px-4 py-3 rounded-r-lg">Date Added</th>
+                </tr>
+              </thead>
+              <tbody id="auth-list-body" class="divide-y divide-slate-800/50 text-gray-300">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- DONATION MODAL -->
+  <div id="donate-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+    <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 border border-slate-700 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Close Button -->
+      <button onclick="closeDonateModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <!-- Modal Header -->
+      <div class="flex items-center space-x-3 mb-5">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+          <i data-lucide="heart-handshake" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Make an ETH Donation</h3>
+          <p id="modal-ngo-name" class="text-sm font-semibold text-indigo-400">Target NGO</p>
+        </div>
+      </div>
+
+      <!-- NGO Info Summary -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 mb-5 text-xs space-y-2">
+        <div class="flex justify-between">
+          <span class="text-gray-400">Govt Reg Number:</span>
+          <span id="modal-reg-id" class="text-white font-mono-custom font-bold">#1001</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Recipient Wallet:</span>
+          <span id="modal-wallet-addr" class="text-gray-300 font-mono-custom truncate max-w-[220px]">0x...</span>
+        </div>
+      </div>
+
+      <!-- Donation Amount Form -->
+      <form id="donation-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Select or Enter Amount (ETH)</label>
+          <div class="grid grid-cols-4 gap-2 mb-3">
+            <button type="button" onclick="setPresetAmount('0.01')" class="py-2 rounded-xl text-xs font-bold bg-slate-900 border border-slate-800 hover:border-indigo-500 text-gray-300 hover:text-white transition">0.01 ETH</button>
+            <button type="button" onclick="setPresetAmount('0.05')" class="py-2 rounded-xl text-xs font-bold bg-slate-900 border border-slate-800 hover:border-indigo-500 text-gray-300 hover:text-white transition">0.05 ETH</button>
+            <button type="button" onclick="setPresetAmount('0.1')" class="py-2 rounded-xl text-xs font-bold bg-slate-900 border border-slate-800 hover:border-indigo-500 text-gray-300 hover:text-white transition">0.10 ETH</button>
+            <button type="button" onclick="setPresetAmount('0.5')" class="py-2 rounded-xl text-xs font-bold bg-slate-900 border border-slate-800 hover:border-indigo-500 text-gray-300 hover:text-white transition">0.50 ETH</button>
+          </div>
+
+          <div class="relative">
+            <input type="number" step="0.001" min="0.0001" id="donation-amount-input" required placeholder="0.05" class="w-full pl-4 pr-16 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-base font-bold font-mono-custom text-white focus:outline-none focus:border-indigo-500 transition">
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-indigo-400">ETH</span>
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1 flex justify-between">
+            <span>≈ $<span id="modal-amount-usd">165.00</span> USD</span>
+            <span>100% directly sent to NGO</span>
+          </p>
+        </div>
+
+        <button type="submit" id="confirm-donate-btn" class="w-full py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-600 via-blue-600 to-emerald-500 hover:opacity-90 text-white transition shadow-lg shadow-indigo-500/25 flex items-center justify-center space-x-2">
+          <i data-lucide="send" class="w-4 h-4"></i>
+          <span>Confirm & Send Donation</span>
+        </button>
+      </form>
+
     </div>
   </div>
 
-  <div class="sm:hidden" id="mobile-menu">
-    <div class="px-2 pt-2 pb-3 space-y-1">
-      <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Home</a>
-      <a href="#" class="text-gray-300">
-        <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">My Donations</a>
-      <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Enroll as NGO</a>
-      <button id="connect-metamask-button-mobile" class="bg-white p-1 rounded-md text-gray-800 font-medium hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
-        Connect to Metamask
-      </button>
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-slate-950/60 py-8 z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+      <div class="flex items-center space-x-2">
+        <span class="font-bold text-gray-400">sempII</span>
+        <span>•</span>
+        <span>Decentralized Charity & Philanthropy Protocol</span>
+      </div>
+      <div>
+        <span>Built with Solidity, Ethers.js & TailwindCSS</span>
+      </div>
     </div>
-  </div>
-</nav>
+  </footer>
+
+  <!-- Script -->
+  <script src="./script.js"></script>
 </body>
 </html>
